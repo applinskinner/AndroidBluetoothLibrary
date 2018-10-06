@@ -46,6 +46,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.os.Process;
 import android.support.annotation.RequiresPermission;
 import android.util.Log;
 
@@ -324,6 +325,8 @@ public class BluetoothClassicService extends BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
+            Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
+            
             byte temp;
             final byte[] buffer = new byte[mConfig.bufferSize];
             int i = 0;
