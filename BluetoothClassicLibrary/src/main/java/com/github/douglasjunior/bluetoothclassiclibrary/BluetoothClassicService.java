@@ -47,6 +47,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Process;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 import android.util.Log;
 
@@ -64,7 +65,7 @@ public class BluetoothClassicService extends BluetoothService {
     //private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
     // Member fields
-    private final BluetoothAdapter mAdapter;
+    @Nullable private final BluetoothAdapter mAdapter;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
 
@@ -253,7 +254,7 @@ public class BluetoothClassicService extends BluetoothService {
             setName("ConnectThread");
 
             // Always cancel discovery because it will slow down a connection
-            if (mAdapter.isDiscovering())
+            if (mAdapter != null && mAdapter.isDiscovering())
                 mAdapter.cancelDiscovery();
 
             // Make a connection to the BluetoothSocket
@@ -326,7 +327,7 @@ public class BluetoothClassicService extends BluetoothService {
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
-            
+
             byte temp;
             final byte[] buffer = new byte[mConfig.bufferSize];
             int i = 0;
@@ -464,11 +465,13 @@ public class BluetoothClassicService extends BluetoothService {
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         mConfig.context.registerReceiver(mScanReceiver, filter);
 
-        if (mAdapter.isDiscovering()) {
-            mAdapter.cancelDiscovery();
-        }
+        if (mAdapter != null) {
+            if (mAdapter.isDiscovering()) {
+                mAdapter.cancelDiscovery();
+            }
 
-        mAdapter.startDiscovery();
+            mAdapter.startDiscovery();
+        }
     }
 
     @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
@@ -480,7 +483,7 @@ public class BluetoothClassicService extends BluetoothService {
             ex.printStackTrace();
         }
 
-        if (mAdapter.isDiscovering()) {
+        if (mAdapter != null && mAdapter.isDiscovering()) {
             mAdapter.cancelDiscovery();
         }
 
