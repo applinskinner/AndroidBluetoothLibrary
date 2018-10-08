@@ -53,6 +53,7 @@ import android.util.Log;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
  * Code adapted from Android Open Source Project
@@ -68,6 +69,8 @@ public class BluetoothClassicService extends BluetoothService {
     @Nullable private final BluetoothAdapter mAdapter;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
+
+    private byte[] readData;
 
     protected BluetoothClassicService(BluetoothConfiguration config) {
         super(config);
@@ -363,13 +366,17 @@ public class BluetoothClassicService extends BluetoothService {
         }
 
         private void dispatchBuffer(byte[] buffer, int i) {
-            final byte[] data = new byte[i];
-            System.arraycopy(buffer, 0, data, 0, i);
+            byte[] data = buffer;
+            if (mConfig.callListenersInMainThread) {
+                data = new byte[i];
+                System.arraycopy(buffer, 0, data, 0, i);
+            }
             if (onEventCallback != null) {
+                final byte[] eventData = data;
                 runOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        onEventCallback.onDataRead(data, data.length);
+                        onEventCallback.onDataRead(eventData, eventData.length);
                     }
                 });
             }
