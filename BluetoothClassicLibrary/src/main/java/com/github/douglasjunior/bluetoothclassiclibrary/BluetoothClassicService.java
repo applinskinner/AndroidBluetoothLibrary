@@ -70,8 +70,6 @@ public class BluetoothClassicService extends BluetoothService {
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
 
-    private byte[] readData;
-
     protected BluetoothClassicService(BluetoothConfiguration config) {
         super(config);
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -191,6 +189,11 @@ public class BluetoothClassicService extends BluetoothService {
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
+        if (mConnectThread != null) {
+            mConnectThread.cancel();
+            mConnectThread = null;
+        }
+
         updateState(BluetoothStatus.NONE);
 
         // Send a failure message back to the Activity
@@ -207,6 +210,11 @@ public class BluetoothClassicService extends BluetoothService {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
+        if (mConnectedThread != null) {
+            mConnectedThread.cancel();
+            mConnectedThread = null;
+        }
+
         updateState(BluetoothStatus.NONE);
 
         // Send a failure message back to the Activity
@@ -268,12 +276,6 @@ public class BluetoothClassicService extends BluetoothService {
             } catch (Exception e) {
                 e.printStackTrace();
                 connectionFailed();
-                // Close the socket
-                try {
-                    mmSocket.close();
-                } catch (Exception e2) {
-                    Log.e(TAG, "unable to close() socket during connection failure", e2);
-                }
                 return;
             }
 
@@ -413,6 +415,11 @@ public class BluetoothClassicService extends BluetoothService {
             }
             try {
                 mmInStream.close();
+            } catch (Exception e) {
+                Log.e(TAG, "close() of connect socket failed", e);
+            }
+            try {
+                mmOutStream.close();
             } catch (Exception e) {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
